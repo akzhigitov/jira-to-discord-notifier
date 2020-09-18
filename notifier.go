@@ -66,6 +66,14 @@ func createMessageFromIssues(issueService *jira.IssueService, issues []jira.Issu
 }
 
 func main() {
+	f, err := os.OpenFile("bugReporter", os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	log.SetOutput(f)
+
 	tp := jira.BasicAuthTransport{
 		Username: JiraUsername,
 		Password: JiraPassword,
