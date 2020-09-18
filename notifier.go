@@ -5,20 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/andygrunwald/go-jira"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
+	"strconv"
 )
 
-type Config struct {
-	JiraUrl      string `json:"jiraUrl"`
-	FilterId     int    `json:"filterId"`
-	WebHookUrl   string `json:"webHookUrl"`
-	JiraUsername string `json:"jiraUsername"`
-	JiraPassword string `json:"jiraPassword"`
-}
+var (
+	JiraUrl      = os.Getenv("JIRA_URL")
+	WebHookUrl   = os.Getenv("WEB_HOOK_URL")
+	JiraUsername = os.Getenv("JIRA_USERNAME")
+	JiraPassword = os.Getenv("JIRA_PASSWORD")
+	JiraFilterId = os.Getenv("JIRA_FILTER_ID")
+)
 
 type Message struct {
 	Embeds []Embed `json:"embeds"`
@@ -38,7 +37,6 @@ type Author struct {
 }
 
 var (
-	config     = &Config{}
 	jiraClient = &jira.Client{}
 )
 
@@ -52,7 +50,7 @@ func createMessageFromIssues(issues []jira.Issue) (Message, bool) {
 		embed := Embed{
 			Title:       fmt.Sprintf("%s: %s", issue.Fields.Summary, issue.Key),
 			Description: issue.Fields.Description,
-			URL:         config.JiraUrl + "/browse/" + issue.Key,
+			URL:         JiraUrl + "/browse/" + issue.Key,
 			Color:       15746887, //red
 			Author: Author{
 				Name: issue.Fields.Creator.Name,
@@ -62,7 +60,7 @@ func createMessageFromIssues(issues []jira.Issue) (Message, bool) {
 
 		message.Embeds = append(message.Embeds, embed)
 
-		_, err := jiraClient.Issue.AddWatcher(issue.ID, config.JiraUsername)
+		_, err := jiraClient.Issue.AddWatcher(issue.ID, JiraUsername)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -71,33 +69,21 @@ func createMessageFromIssues(issues []jira.Issue) (Message, bool) {
 }
 
 func main() {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	configPath := filepath.Join(dir, "config.json")
-	data, err := ioutil.ReadFile(configPath)
-	if err != nil {
-		log.Fatalln("cant read config file:", err)
-	}
-
-	err = json.Unmarshal(data, config)
-	if err != nil {
-		log.Fatalln("cant parse config:", err)
-	}
-
 	tp := jira.BasicAuthTransport{
-		Username: config.JiraUsername,
-		Password: config.JiraPassword,
+		Username: JiraUsername,
+		Password: JiraPassword,
 	}
 
-	jiraClient, err := jira.NewClient(tp.Client(), config.JiraUrl)
+	jiraClient, err := jira.NewClient(tp.Client(), JiraUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	filter, _, err := jiraClient.Filter.Get(config.FilterId)
+	filterId, err := strconv.Atoi(JiraFilterId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	filter, _, err := jiraClient.Filter.Get(filterId)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,7 +102,7 @@ func main() {
 
 		log.Printf("Send %v", string(bytesRepresentation))
 
-		_, err = http.Post(config.WebHookUrl, "application/json", bytes.NewBuffer(bytesRepresentation))
+		_, err = http.Post(WebHookUrl, "application/json", bytes.NewBuffer(bytesRepresentation))
 		if err != nil {
 			log.Fatalln(err)
 		}
