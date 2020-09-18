@@ -17,6 +17,7 @@ var (
 	JiraUsername = os.Getenv("JIRA_USERNAME")
 	JiraPassword = os.Getenv("JIRA_PASSWORD")
 	JiraFilterId = os.Getenv("JIRA_FILTER_ID")
+	jiraClient   = &jira.Client{}
 )
 
 type Message struct {
@@ -36,11 +37,7 @@ type Author struct {
 	Icon string `json:"icon_url"`
 }
 
-var (
-	jiraClient = &jira.Client{}
-)
-
-func createMessageFromIssues(issues []jira.Issue) (Message, bool) {
+func createMessageFromIssues(issueService *jira.IssueService, issues []jira.Issue) (Message, bool) {
 	message := Message{}
 	for _, issue := range issues {
 		if issue.Fields.Watches.IsWatching {
@@ -48,19 +45,19 @@ func createMessageFromIssues(issues []jira.Issue) (Message, bool) {
 		}
 
 		embed := Embed{
-			Title:       fmt.Sprintf("%s: %s", issue.Fields.Summary, issue.Key),
-			Description: issue.Fields.Description,
+			Title:       fmt.Sprintf("%s: %s", issue.Key, issue.Fields.Summary),
+			Description: fmt.Sprintf(
+				"**Приоритет: %s**\nОписание:\n%s", issue.Fields.Priority.Name, issue.Fields.Description),
 			URL:         JiraUrl + "/browse/" + issue.Key,
 			Color:       15746887, //red
 			Author: Author{
 				Name: issue.Fields.Creator.Name,
-				Icon: issue.Fields.Priority.IconURL,
 			},
 		}
 
 		message.Embeds = append(message.Embeds, embed)
 
-		_, err := jiraClient.Issue.AddWatcher(issue.ID, JiraUsername)
+		_, err := issueService.AddWatcher(issue.ID, JiraUsername)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -92,7 +89,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	message, ok := createMessageFromIssues(issues)
+	message, ok := createMessageFromIssues(jiraClient.Issue, issues)
 
 	if ok {
 		bytesRepresentation, err := json.Marshal(message)
