@@ -6,5 +6,6 @@
 * JIRA_USERNAME
 * JIRA_PASSWORD
 * JIRA_FILTER_ID
+* LABELS_ROLES
 
 Запуск каждые 5 минут с 8 до 21 по будним дням: */5 08-21 * * 1-5
