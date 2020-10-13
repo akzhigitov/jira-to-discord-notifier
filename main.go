@@ -3,7 +3,8 @@ package main
 import (
 	"bugReporter/handler"
 	"bugReporter/utils"
-	"log"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
 
@@ -17,9 +18,9 @@ var (
 )
 
 func main() {
-	f, err := os.OpenFile("bugReporter", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("testlogrus.log", os.O_APPEND | os.O_CREATE | os.O_RDWR, 0666)
 	if err != nil {
-		log.Fatalf("error opening file: %v", err)
+		fmt.Printf("error opening file: %v", err)
 	}
 	defer f.Close()
 
@@ -35,7 +36,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	messages := jiraHandler.CreateMessageFromIssues(issues, utils.String2Map(LabelsRoles, " ", ":"))
+	messages := jiraHandler.CreateMessageFromIssues(issues, utils.String2Map(LabelsRoles, ";", ":"))
 
 	discordHandler := handler.NewDiscordHandler(WebHookUrl)
 	for _, message := range messages {

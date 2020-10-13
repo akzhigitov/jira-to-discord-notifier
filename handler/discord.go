@@ -4,7 +4,7 @@ import (
 	"bugReporter/model"
 	"bytes"
 	"encoding/json"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -24,8 +24,8 @@ func (handler DiscordHandler) SendMessage(message model.Message) error {
 		return err
 	}
 
-	log.Printf("Send %v", message)
-
-	_, err = http.Post(handler.webHookUrl, "application/json", bytes.NewBuffer(bytesRepresentation))
+	log.Infoln("Discord request", message)
+	response, err := http.Post(handler.webHookUrl, "application/json", bytes.NewBuffer(bytesRepresentation))
+	log.Infoln("Discord response", response)
 	return err
 }
