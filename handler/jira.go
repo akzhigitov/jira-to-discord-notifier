@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+const DescriptionLenMax = 2048
+
 type JiraHandler struct {
 	jiraClient   *jira.Client
 	JiraUrl      string
@@ -109,12 +111,17 @@ func (handler JiraHandler) getRoles(labels []string, labelsRoles map[string]stri
 }
 
 func (handler JiraHandler) createEmbed(issue jira.Issue) model.Embed {
+	description := fmt.Sprintf(
+		"**Приоритет: %s**\nОписание:\n%s", issue.Fields.Priority.Name, issue.Fields.Description)
+	if len(description) > DescriptionLenMax {
+		description = description[:DescriptionLenMax]
+	}
+
 	embed := model.Embed{
-		Title: fmt.Sprintf("%s: %s", issue.Key, issue.Fields.Summary),
-		Description: fmt.Sprintf(
-			"**Приоритет: %s**\nОписание:\n%s", issue.Fields.Priority.Name, issue.Fields.Description),
-		URL:   handler.JiraUrl + "/browse/" + issue.Key,
-		Color: 15746887, //red
+		Title:       fmt.Sprintf("%s: %s", issue.Key, issue.Fields.Summary),
+		Description: description,
+		URL:         handler.JiraUrl + "/browse/" + issue.Key,
+		Color:       15746887, //red
 		Author: model.Author{
 			Name: issue.Fields.Creator.Name,
 		},
