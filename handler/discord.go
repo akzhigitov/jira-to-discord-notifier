@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"../model"
 	"bytes"
 	"encoding/json"
+	"github.com/maraticus/jira-to-discord-notifier/model"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -24,8 +24,8 @@ func (handler DiscordHandler) SendMessage(message model.Message) error {
 		return err
 	}
 
-	log.Infoln("Discord request", message)
+	log.Debugln("Discord request", message)
 	response, err := http.Post(handler.webHookUrl, "application/json", bytes.NewBuffer(bytesRepresentation))
-	log.Infoln("Discord response", response)
+	log.Debugln("Discord response", response)
 	return err
 }

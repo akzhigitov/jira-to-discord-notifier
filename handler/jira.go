@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"../model"
 	"fmt"
 	"github.com/andygrunwald/go-jira"
+	"github.com/maraticus/jira-to-discord-notifier/model"
 	log "github.com/sirupsen/logrus"
 	"sort"
 	"strconv"
