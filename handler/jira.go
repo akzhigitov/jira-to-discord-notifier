@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"bugReporter/model"
+	"../model"
 	"fmt"
 	"github.com/andygrunwald/go-jira"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sort"
 	"strconv"
 	"strings"
