@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"bugReporter/model"
+	"../model"
 	"fmt"
 	"github.com/andygrunwald/go-jira"
 	log "github.com/sirupsen/logrus"

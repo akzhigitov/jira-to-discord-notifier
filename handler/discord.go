@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"bugReporter/model"
+	"../model"
 	"bytes"
 	"encoding/json"
 	log "github.com/sirupsen/logrus"

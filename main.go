@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bugReporter/handler"
-	"bugReporter/utils"
+	"./handler"
+	"./utils"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
