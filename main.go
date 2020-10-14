@@ -9,16 +9,16 @@ import (
 )
 
 var (
-	JiraUrl      = os.Getenv("JIRA_URL")
-	WebHookUrl   = os.Getenv("WEB_HOOK_URL")
-	JiraUsername = os.Getenv("JIRA_USERNAME")
-	JiraPassword = os.Getenv("JIRA_PASSWORD")
-	JiraFilterId = os.Getenv("JIRA_FILTER_ID")
-	LabelsRoles  = os.Getenv("LABELS_ROLES")
+	jiraURL      = os.Getenv("JIRA_URL")
+	webHookURL   = os.Getenv("WEB_HOOK_URL")
+	jiraUsername = os.Getenv("JIRA_USERNAME")
+	jiraPassword = os.Getenv("JIRA_PASSWORD")
+	jiraFilterID = os.Getenv("JIRA_FILTER_ID")
+	labelsRoles  = os.Getenv("LABELS_ROLES")
 )
 
 func main() {
-	f, err := os.OpenFile(os.Args[0]+".log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	f, err := os.OpenFile("log.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
 	}
@@ -26,19 +26,19 @@ func main() {
 
 	log.SetOutput(f)
 
-	jiraHandler, err := handler.NewJiraHandler(JiraUsername, JiraPassword, JiraUrl)
+	jiraHandler, err := handler.NewJiraHandler(jiraUsername, jiraPassword, jiraURL)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	issues, err := jiraHandler.IssuesFromFilter(JiraFilterId)
+	issues, err := jiraHandler.IssuesFromFilter(jiraFilterID)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	messages := jiraHandler.CreateMessageFromIssues(issues, utils.String2Map(LabelsRoles, ";", ":"))
+	messages := jiraHandler.CreateMessageFromIssues(issues, utils.String2Map(labelsRoles, ";", ":"))
 
-	discordHandler := handler.NewDiscordHandler(WebHookUrl)
+	discordHandler := handler.NewDiscordHandler(webHookURL)
 	for _, message := range messages {
 		err := discordHandler.SendMessage(message)
 		if err != nil {
