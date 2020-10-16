@@ -13,7 +13,7 @@ func String2Map(raw string, itemSep string, kvSep string) map[string]string {
 	return result
 }
 
-func parseKeyValue(item string, sep string) (string, string) {
+func parseKeyValue(item string, sep string) (key string, value string) {
 	result := strings.Split(item, sep)
 	return result[0], result[1]
 }
