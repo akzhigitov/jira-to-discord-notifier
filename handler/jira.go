@@ -2,8 +2,8 @@ package handler
 
 import (
 	"fmt"
+	"github.com/akzhigitov/jira-to-discord-notifier/model"
 	"github.com/andygrunwald/go-jira"
-	"github.com/maraticus/jira-to-discord-notifier/model"
 	log "github.com/sirupsen/logrus"
 	"sort"
 	"strconv"
@@ -83,22 +83,20 @@ func (handler JiraHandler) markAsWatched(issue jira.Issue) {
 	}
 }
 
-func (handler JiraHandler) createMessages(embedMessagesByContent map[string][]model.Embed) []model.Message {
-	var result []model.Message
+func (handler JiraHandler) createMessages(embedMessagesByContent map[string][]model.Embed) (messages []model.Message) {
 	for content, embeds := range embedMessagesByContent {
 		message := model.Message{
 			Embeds:  embeds,
 			Content: content,
 		}
 
-		result = append(result, message)
+		messages = append(messages, message)
 	}
-	return result
+	return messages
 }
 
-func (handler JiraHandler) getRoles(labels []string, labelsRoles map[string]string) []string {
+func (handler JiraHandler) getRoles(labels []string, labelsRoles map[string]string) (roles []string) {
 	sort.Strings(labels)
-	var roles []string
 	for _, label := range labels {
 		role, ok := labelsRoles[strings.ToLower(label)]
 		if !ok {
@@ -112,12 +110,12 @@ func (handler JiraHandler) getRoles(labels []string, labelsRoles map[string]stri
 
 func (handler JiraHandler) createEmbed(issue jira.Issue) model.Embed {
 	description := fmt.Sprintf(
-		"**Приоритет: %s**\nОписание:\n%s", issue.Fields.Priority.Name, issue.Fields.Description)
+		"**Приоритет: %s**\n\n%s", issue.Fields.Priority.Name, parseDescription(issue.Fields.Description))
 	if len(description) > DescriptionLenMax {
 		description = description[:DescriptionLenMax]
 	}
 
-	embed := model.Embed{
+	return model.Embed{
 		Title:       fmt.Sprintf("%s: %s", issue.Key, issue.Fields.Summary),
 		Description: description,
 		URL:         handler.JiraUrl + "/browse/" + issue.Key,
@@ -126,5 +124,24 @@ func (handler JiraHandler) createEmbed(issue jira.Issue) model.Embed {
 			Name: issue.Fields.Creator.Name,
 		},
 	}
-	return embed
+}
+
+func parseDescription(description string) string {
+	jiraBlock := "{code}"
+	discordBlock:="```"
+	builder := strings.Builder{}
+	for _, line := range strings.Split(description, "\n") {
+		if strings.Contains(line, jiraBlock) {
+			builder.WriteString(strings.ReplaceAll(line, jiraBlock, discordBlock))
+		} else if strings.Contains(line, "{code:") {
+			line = strings.Replace(line, "{code:", discordBlock,1)
+			builder.WriteString(strings.Replace(line, "}", "", 1))
+		} else {
+			builder.WriteString(line)
+		}
+
+		builder.WriteRune('\n')
+	}
+
+	return builder.String()
 }

@@ -3,7 +3,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/maraticus/jira-to-discord-notifier/model"
+	"github.com/akzhigitov/jira-to-discord-notifier/model"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )

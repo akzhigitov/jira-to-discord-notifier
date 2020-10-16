@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/maraticus/jira-to-discord-notifier/handler"
-	"github.com/maraticus/jira-to-discord-notifier/utils"
+	"github.com/akzhigitov/jira-to-discord-notifier/handler"
+	"github.com/akzhigitov/jira-to-discord-notifier/utils"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
@@ -18,7 +18,7 @@ var (
 )
 
 func main() {
-	f, err := os.OpenFile("log.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	f, err := os.OpenFile(os.Args[0]+".log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
 	}
