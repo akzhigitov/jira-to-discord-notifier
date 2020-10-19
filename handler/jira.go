@@ -130,7 +130,13 @@ func parseDescription(description string) string {
 	jiraBlock := "{code}"
 	discordBlock:="```"
 	builder := strings.Builder{}
-	for _, line := range strings.Split(description, "\n") {
+	for _, line := range strings.Split(description, "\r\n") {
+		if strings.HasPrefix(line,"+") && strings.HasSuffix(line,"+"){
+			builder.WriteString("__")
+			builder.WriteString(strings.Trim(line,"+"))
+			builder.WriteString("__")
+			continue
+		}
 		if strings.Contains(line, jiraBlock) {
 			builder.WriteString(strings.ReplaceAll(line, jiraBlock, discordBlock))
 		} else if strings.Contains(line, "{code:") {
@@ -140,7 +146,7 @@ func parseDescription(description string) string {
 			builder.WriteString(line)
 		}
 
-		builder.WriteRune('\n')
+		builder.WriteString("\r\n")
 	}
 
 	return builder.String()
