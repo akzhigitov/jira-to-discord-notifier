@@ -128,25 +128,27 @@ func (handler JiraHandler) createEmbed(issue jira.Issue) model.Embed {
 
 func parseDescription(description string) string {
 	jiraBlock := "{code}"
-	discordBlock:="```"
+	discordBlock := "```"
 	builder := strings.Builder{}
-	for _, line := range strings.Split(description, "\r\n") {
-		if strings.HasPrefix(line,"+") && strings.HasSuffix(line,"+"){
+	lines := strings.Split(description, "\r\n")
+	lastLineIndex := len(lines) - 1
+	for lineIndex, line := range lines {
+		if strings.HasPrefix(line, "+") && strings.HasSuffix(line, "+") {
 			builder.WriteString("__")
-			builder.WriteString(strings.Trim(line,"+"))
+			builder.WriteString(strings.Trim(line, "+"))
 			builder.WriteString("__")
-			continue
-		}
-		if strings.Contains(line, jiraBlock) {
+		} else if strings.Contains(line, jiraBlock) {
 			builder.WriteString(strings.ReplaceAll(line, jiraBlock, discordBlock))
 		} else if strings.Contains(line, "{code:") {
-			line = strings.Replace(line, "{code:", discordBlock,1)
+			line = strings.Replace(line, "{code:", discordBlock, 1)
 			builder.WriteString(strings.Replace(line, "}", "", 1))
 		} else {
 			builder.WriteString(line)
 		}
 
-		builder.WriteString("\r\n")
+		if lineIndex < lastLineIndex {
+			builder.WriteString("\r\n")
+		}
 	}
 
 	return builder.String()
