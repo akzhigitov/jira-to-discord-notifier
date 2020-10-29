@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"github.com/akzhigitov/jira-to-discord-notifier/handler"
 	"github.com/akzhigitov/jira-to-discord-notifier/utils"
+	"github.com/bamzi/jobrunner"
+	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"os"
 )
@@ -15,17 +16,13 @@ var (
 	jiraPassword = os.Getenv("JIRA_PASSWORD")
 	jiraFilterID = os.Getenv("JIRA_FILTER_ID")
 	labelsRoles  = os.Getenv("LABELS_ROLES")
+	schedule     = os.Getenv("SCHEDULE")
 )
 
-func main() {
-	f, err := os.OpenFile(os.Args[0]+".log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
-	if err != nil {
-		fmt.Printf("error opening file: %v", err)
-	}
-	defer f.Close()
+type reminder struct {
+}
 
-	log.SetOutput(f)
-
+func (r reminder) Run() {
 	jiraHandler, err := handler.NewJiraHandler(jiraUsername, jiraPassword, jiraURL)
 	if err != nil {
 		log.Fatal(err)
@@ -38,6 +35,8 @@ func main() {
 
 	messages := jiraHandler.CreateMessageFromIssues(issues, utils.String2Map(labelsRoles, ";", ":"))
 
+	log.Debugln("Messages count:", len(messages))
+
 	discordHandler := handler.NewDiscordHandler(webHookURL)
 	for _, message := range messages {
 		err := discordHandler.SendMessage(message)
@@ -45,4 +44,19 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+}
+
+func main() {
+	routes := gin.Default()
+
+	reminder:=reminder{}
+	jobrunner.Now(reminder)
+
+	jobrunner.Start()
+	err := jobrunner.Schedule(schedule, reminder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	routes.Run(":8080")
 }
