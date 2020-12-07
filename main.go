@@ -1,8 +1,6 @@
 package main
 
 import (
-	"github.com/akzhigitov/jira-to-discord-notifier/handler"
-	"github.com/akzhigitov/jira-to-discord-notifier/utils"
 	"github.com/bamzi/jobrunner"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -10,12 +8,14 @@ import (
 )
 
 var (
+	JiraUsername string
+	JiraPassword string
+
 	jiraURL      = os.Getenv("JIRA_URL")
 	webHookURL   = os.Getenv("WEB_HOOK_URL")
-	jiraUsername = os.Getenv("JIRA_USERNAME")
-	jiraPassword = os.Getenv("JIRA_PASSWORD")
 	jiraFilterID = os.Getenv("JIRA_FILTER_ID")
 	labelsRoles  = os.Getenv("LABELS_ROLES")
+	apiKey       = os.Getenv("API_KEY")
 	schedule     = os.Getenv("SCHEDULE")
 )
 
@@ -23,7 +23,7 @@ type reminder struct {
 }
 
 func (r reminder) Run() {
-	jiraHandler, err := handler.NewJiraHandler(jiraUsername, jiraPassword, jiraURL)
+	jiraHandler, err := NewJiraHandler(JiraUsername, JiraPassword, jiraURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,11 +33,11 @@ func (r reminder) Run() {
 		log.Fatal(err)
 	}
 
-	messages := jiraHandler.CreateMessageFromIssues(issues, utils.String2Map(labelsRoles, ";", ":"))
+	messages := jiraHandler.CreateMessageFromIssues(issues, String2Map(labelsRoles, ";", ":"))
 
-	log.Debugln("Messages count:", len(messages))
+	log.Infoln("Messages count:", len(messages))
 
-	discordHandler := handler.NewDiscordHandler(webHookURL)
+	discordHandler := NewDiscordHandler(webHookURL, apiKey)
 	for _, message := range messages {
 		err := discordHandler.SendMessage(message)
 		if err != nil {
@@ -49,7 +49,7 @@ func (r reminder) Run() {
 func main() {
 	routes := gin.Default()
 
-	reminder:=reminder{}
+	reminder := reminder{}
 	jobrunner.Now(reminder)
 
 	jobrunner.Start()
@@ -58,5 +58,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	routes.Run(":8080")
+	err = routes.Run(":8080")
+	if err != nil {
+		log.Error(err)
+	}
 }

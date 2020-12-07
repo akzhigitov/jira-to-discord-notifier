@@ -1,8 +1,7 @@
-package handler
+package main
 
 import (
 	"fmt"
-	"github.com/akzhigitov/jira-to-discord-notifier/model"
 	"github.com/andygrunwald/go-jira"
 	log "github.com/sirupsen/logrus"
 	"sort"
@@ -36,13 +35,13 @@ func NewJiraHandler(jiraUsername string, jiraPassword string, jiraUrl string) (*
 	}, nil
 }
 
-func (handler JiraHandler) IssuesFromFilter(JiraFilterId string) ([]jira.Issue, error) {
+func (handler JiraHandler) IssuesFromFilter(JiraFilterID string) ([]jira.Issue, error) {
 
-	filterId, err := strconv.Atoi(JiraFilterId)
+	filterID, err := strconv.Atoi(JiraFilterID)
 	if err != nil {
 		return nil, err
 	}
-	filter, _, err := handler.jiraClient.Filter.Get(filterId)
+	filter, _, err := handler.jiraClient.Filter.Get(filterID)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +54,8 @@ func (handler JiraHandler) createMessageContent(roles []string) string {
 	return strings.Join(roles, " ")
 }
 
-func (handler JiraHandler) CreateMessageFromIssues(issues []jira.Issue, labelsRoles map[string]string) []model.Message {
-	embedMessagesByContent := map[string][]model.Embed{}
+func (handler JiraHandler) CreateMessageFromIssues(issues []jira.Issue, labelsRoles map[string]string) []Message {
+	embedMessagesByContent := map[string][]Embed{}
 	for _, issue := range issues {
 		if issue.Fields.Watches.IsWatching {
 			continue
@@ -83,9 +82,9 @@ func (handler JiraHandler) markAsWatched(issue jira.Issue) {
 	}
 }
 
-func (handler JiraHandler) createMessages(embedMessagesByContent map[string][]model.Embed) (messages []model.Message) {
+func (handler JiraHandler) createMessages(embedMessagesByContent map[string][]Embed) (messages []Message) {
 	for content, embeds := range embedMessagesByContent {
-		message := model.Message{
+		message := Message{
 			Embeds:  embeds,
 			Content: content,
 		}
@@ -108,19 +107,19 @@ func (handler JiraHandler) getRoles(labels []string, labelsRoles map[string]stri
 	return roles
 }
 
-func (handler JiraHandler) createEmbed(issue jira.Issue) model.Embed {
+func (handler JiraHandler) createEmbed(issue jira.Issue) Embed {
 	description := fmt.Sprintf(
 		"**Приоритет: %s**\n\n%s", issue.Fields.Priority.Name, parseDescription(issue.Fields.Description))
 	if len(description) > DescriptionLenMax {
 		description = description[:DescriptionLenMax]
 	}
 
-	return model.Embed{
+	return Embed{
 		Title:       fmt.Sprintf("%s: %s", issue.Key, issue.Fields.Summary),
 		Description: description,
 		URL:         handler.JiraUrl + "/browse/" + issue.Key,
 		Color:       15746887, //red
-		Author: model.Author{
+		Author: Author{
 			Name: issue.Fields.Creator.Name,
 		},
 	}
@@ -128,19 +127,19 @@ func (handler JiraHandler) createEmbed(issue jira.Issue) model.Embed {
 
 func parseDescription(description string) string {
 	jiraBlock := "{code}"
-	discordBlock:="```"
+	discordBlock := "```"
 	builder := strings.Builder{}
 	for _, line := range strings.Split(description, "\r\n") {
-		if strings.HasPrefix(line,"+") && strings.HasSuffix(line,"+"){
+		if strings.HasPrefix(line, "+") && strings.HasSuffix(line, "+") {
 			builder.WriteString("__")
-			builder.WriteString(strings.Trim(line,"+"))
+			builder.WriteString(strings.Trim(line, "+"))
 			builder.WriteString("__")
 			continue
 		}
 		if strings.Contains(line, jiraBlock) {
 			builder.WriteString(strings.ReplaceAll(line, jiraBlock, discordBlock))
 		} else if strings.Contains(line, "{code:") {
-			line = strings.Replace(line, "{code:", discordBlock,1)
+			line = strings.Replace(line, "{code:", discordBlock, 1)
 			builder.WriteString(strings.Replace(line, "}", "", 1))
 		} else {
 			builder.WriteString(line)
