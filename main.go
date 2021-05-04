@@ -8,9 +8,8 @@ import (
 )
 
 var (
-	JiraUsername string
-	JiraPassword string
-
+	JiraUsername =  os.Getenv("JIRA_USERNAME")
+	JiraPassword  = os.Getenv("JIRA_PASSWORD")
 	jiraURL      = os.Getenv("JIRA_URL")
 	webHookURL   = os.Getenv("WEB_HOOK_URL")
 	jiraFilterID = os.Getenv("JIRA_FILTER_ID")
